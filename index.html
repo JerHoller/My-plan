@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="My Plan" />
@@ -14,524 +14,440 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body, #root { height: 100%; background: #0D0D0F; }
-  body { overscroll-behavior: none; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes breatheIn { from { transform: scale(1); opacity: 0.6; } to { transform: scale(1.18); opacity: 1; } }
-  @keyframes breatheOut { from { transform: scale(1.18); opacity: 1; } to { transform: scale(1); opacity: 0.6; } }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 #C8F13540; } 50% { box-shadow: 0 0 0 12px #C8F13510; } }
-  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-  input, textarea { outline: none; font-family: 'DM Sans', sans-serif; -webkit-appearance: none; border-radius: 0; }
-  ::-webkit-scrollbar { width: 3px; }
-  ::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 2px; }
+  html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #0D0D0F; overscroll-behavior: none; }
+  #root { height: 100%; width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .page { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; padding: 16px 16px 96px; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 #C8F13540;}50%{box-shadow:0 0 0 14px #C8F13510;} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+  input,textarea{outline:none;font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+  ::-webkit-scrollbar{display:none;}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
-
 const C = {
-  bg: "#0D0D0F", surface: "#16161A", card: "#1C1C22", border: "#2A2A35",
-  accent: "#C8F135", accentDim: "#9BBF1A", red: "#FF4D6D", blue: "#4D9FFF",
-  gold: "#FFB830", green: "#3DDC84", purple: "#A78BFA",
-  text: "#F0F0F5", muted: "#7A7A90", dimmed: "#2A2A35",
+  bg:"#0D0D0F",surface:"#16161A",card:"#1C1C22",border:"#2A2A35",
+  accent:"#C8F135",accentDim:"#9BBF1A",red:"#FF4D6D",blue:"#4D9FFF",
+  gold:"#FFB830",green:"#3DDC84",purple:"#A78BFA",
+  text:"#F0F0F5",muted:"#7A7A90",dimmed:"#2A2A35",
 };
 
-// ── Morning Routine Data ───────────────────────────────────────
 const morningMoves = [
-  {
-    name: "Diaphragmatic Breathing",
-    duration: 90,
-    emoji: "🌬️",
-    category: "Breathwork",
-    description: "Lie flat on your back, knees bent, feet on floor. One hand on chest, one on belly. Breathe in through your nose for 4 counts — only your belly hand should rise. Exhale slowly through your mouth for 6 counts. This activates the parasympathetic nervous system and sets a calm tone for the whole routine.",
-    benefit: "Calms the nervous system, oxygenates the body, reduces morning cortisol spike.",
-    cue: "Chest stays still. Only the belly moves.",
-  },
-  {
-    name: "Supine Spinal Twist",
-    duration: 60,
-    emoji: "🌀",
-    category: "Mobility",
-    description: "Still on your back. Draw your right knee to your chest, then let it fall across your body to the left. Extend your right arm out to the side and look right. Hold 30 seconds, breathe into the twist. Switch sides. This gently decompresses the spine after a night of stillness.",
-    benefit: "Releases the lower back and thoracic spine. Stimulates lymphatic flow through the torso.",
-    cue: "Keep both shoulders grounded. Don't force the knee down — let gravity do it.",
-  },
-  {
-    name: "Cat-Cow Flow",
-    duration: 60,
-    emoji: "🐱",
-    category: "Mobility",
-    description: "Come to hands and knees — wrists directly under shoulders, knees under hips. Inhale: drop belly toward floor, lift chest and tailbone (Cow). Exhale: round spine toward ceiling, tuck chin and tailbone (Cat). Move slowly with your breath. 8–10 full cycles. If wrists complain, make fists or use forearms.",
-    benefit: "Lubricates every vertebral joint in the spine. Wakes up the core.",
-    cue: "Lead the movement from your pelvis, not your neck.",
-  },
-  {
-    name: "Child's Pose with Lat Reach",
-    duration: 45,
-    emoji: "🙏",
-    category: "Mobility",
-    description: "From hands and knees, sink hips back toward heels. Walk both hands forward and to the left — feel the right lat open up. Hold 15–20 seconds. Walk hands to the right. Hold. Come back to centre. If ankle flexion is painful, place a folded blanket under your ankles.",
-    benefit: "Opens the lats, shoulders, and hips simultaneously. Gentle ankle mobilisation.",
-    cue: "Breathe into whichever side feels tighter. Let it release on the exhale.",
-  },
-  {
-    name: "Seated Hip Circles",
-    duration: 60,
-    emoji: "⭕",
-    category: "Lymphatic",
-    description: "Sit cross-legged or in a chair. Hands on knees. Slowly circle your torso in large, deliberate circles — 5 rotations one way, 5 the other. Imagine stirring something thick with your whole upper body. This is one of the most underrated morning moves — directly stimulates the lymph nodes in the groin and abdomen.",
-    benefit: "Activates the lymphatic system, massages abdominal organs, loosens the hip flexors.",
-    cue: "Make the circles as wide as comfortable. Eyes can be closed.",
-  },
-  {
-    name: "Neck & Shoulder Release",
-    duration: 60,
-    emoji: "😮‍💨",
-    category: "Mobility",
-    description: "Sit tall, feet flat on floor. Slowly drop your right ear toward your right shoulder — don't force it. Let gravity do the work for 20 seconds. Roll your chin slowly toward your chest, over to the left side. Repeat other direction. Then: roll both shoulders backward 5 times, forward 5 times. Especially useful after sleeping in a weird position.",
-    benefit: "Releases neck tension, improves thoracic mobility, stimulates lymph nodes in the neck.",
-    cue: "No crunching or forcing. This is gravity-assisted — your muscles stay relaxed.",
-  },
-  {
-    name: "Ankle Circles & Foot Wake-Up",
-    duration: 45,
-    emoji: "🦶",
-    category: "Joint Care",
-    description: "Sit on the edge of your bed or floor. Lift one foot and slowly circle the ankle 8 times each direction. Flex and point the foot 8 times. Spread your toes as wide as possible, hold 3 seconds, release. Repeat other foot. Given your ankle issues, this is non-negotiable — it pumps synovial fluid into the joint before you put weight on it.",
-    benefit: "Lubricates the ankle joint, reduces stiffness, prevents the compensations that stress your knees.",
-    cue: "Make the circles as big as your ankle allows. Don't rush.",
-  },
-  {
-    name: "Standing Sway & Breath",
-    duration: 60,
-    emoji: "🌊",
-    category: "Lymphatic",
-    description: "Come to standing, feet hip-width. Close your eyes. Gently sway forward and back, then side to side — tiny movements, like seaweed in water. Let your arms hang loose and swing naturally. After 30 seconds, add gentle shoulder shrugs — up on inhale, drop on exhale. This light rhythmic movement is one of the best lymphatic drainage techniques there is.",
-    benefit: "Drives lymphatic circulation without any joint load. Calms the mind, wakes the body.",
-    cue: "There's no wrong way to sway. The slower and more natural, the better.",
-  },
+  {name:"Diaphragmatic Breathing",duration:90,emoji:"🌬️",category:"Breathwork",description:"Lie flat on your back, knees bent, feet on floor. One hand on chest, one on belly. Breathe in through your nose for 4 counts — only your belly hand should rise. Exhale slowly through your mouth for 6 counts. This activates the parasympathetic nervous system and sets a calm tone for the whole routine.",benefit:"Calms the nervous system, oxygenates the body, reduces morning cortisol spike.",cue:"Chest stays still. Only the belly moves."},
+  {name:"Supine Spinal Twist",duration:60,emoji:"🌀",category:"Mobility",description:"Still on your back. Draw your right knee to your chest, then let it fall across your body to the left. Extend your right arm out to the side and look right. Hold 30 seconds, breathe into the twist. Switch sides.",benefit:"Releases the lower back and thoracic spine. Stimulates lymphatic flow through the torso.",cue:"Keep both shoulders grounded. Don't force the knee down — let gravity do it."},
+  {name:"Cat-Cow Flow",duration:60,emoji:"🐱",category:"Mobility",description:"Hands and knees — wrists under shoulders, knees under hips. Inhale: drop belly, lift chest and tailbone. Exhale: round spine, tuck chin and tailbone. 8–10 slow cycles. If wrists hurt, use fists or forearms.",benefit:"Lubricates every vertebral joint in the spine. Wakes up the core.",cue:"Lead from your pelvis, not your neck."},
+  {name:"Child's Pose with Lat Reach",duration:45,emoji:"🙏",category:"Mobility",description:"From hands and knees, sink hips back toward heels. Walk hands forward and to the left — feel the right lat open. Hold 15–20 seconds. Walk hands to the right. Hold. Come back to centre. If ankle flexion hurts, fold a blanket under your ankles.",benefit:"Opens the lats, shoulders, and hips simultaneously. Gentle ankle mobilisation.",cue:"Breathe into whichever side feels tighter. Let it release on the exhale."},
+  {name:"Seated Hip Circles",duration:60,emoji:"⭕",category:"Lymphatic",description:"Sit cross-legged or in a chair. Hands on knees. Slowly circle your torso in large deliberate circles — 5 rotations one way, 5 the other. Imagine stirring something thick with your whole upper body.",benefit:"Activates the lymphatic system, massages abdominal organs, loosens the hip flexors.",cue:"Make the circles as wide as comfortable. Eyes can be closed."},
+  {name:"Neck & Shoulder Release",duration:60,emoji:"😮‍💨",category:"Mobility",description:"Sit tall, feet flat. Drop your right ear toward your right shoulder — gravity only, no forcing. Hold 20 seconds. Roll chin slowly to the left. Switch. Then roll both shoulders backward 5 times, forward 5 times.",benefit:"Releases neck tension, improves thoracic mobility, stimulates lymph nodes in the neck.",cue:"No crunching or forcing. Muscles stay relaxed."},
+  {name:"Ankle Circles & Foot Wake-Up",duration:45,emoji:"🦶",category:"Joint Care",description:"Sit on the edge of bed or floor. Lift one foot, circle the ankle 8 times each direction. Flex and point 8 times. Spread toes as wide as possible, hold 3 seconds, release. Repeat other foot.",benefit:"Lubricates the ankle joint, reduces stiffness, prevents compensations that stress your knees.",cue:"Make the circles as big as your ankle allows. Don't rush."},
+  {name:"Standing Sway & Breath",duration:60,emoji:"🌊",category:"Lymphatic",description:"Stand feet hip-width. Close your eyes. Gently sway forward and back, then side to side — tiny movements, like seaweed. Arms hang loose and swing naturally. After 30 seconds, add gentle shoulder shrugs — up on inhale, drop on exhale.",benefit:"Drives lymphatic circulation without any joint load. Calms the mind, wakes the body.",cue:"There's no wrong way to sway. Slower and more natural is better."},
 ];
 
-// ── Workout Data ───────────────────────────────────────────────
 const workouts = [
-  {
-    id: "upper-a", day: "Upper A", tag: "Strength", emoji: "💪", color: C.blue,
-    duration: "55–65 min", focus: "Heavy compounds, low reps, full recovery. Wrist-modified.",
-    exercises: [
-      { name: "DB Bench Press", sets: 4, reps: "4–6", tempo: "2·1·1", rest: "2–3 min", time: "~14 min", form: "Retract shoulder blades into the bench. Lower DBs until elbows are just below chest — don't let wrists collapse inward.", overload: "Hit 4×6 → add 2.5 lb per DB next session." },
-      { name: "Cable Row (neutral grip)", sets: 4, reps: "4–6", tempo: "2·1·1", rest: "2–3 min", time: "~14 min", form: "Sit tall, pull handle to lower chest, squeeze shoulder blades at end. Don't round lower back on return.", overload: "Hit 4×6 → add one weight plate increment next session." },
-      { name: "Seated DB Shoulder Press", sets: 3, reps: "6–8", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Press with palms facing slightly inward (neutral grip). Don't shrug — keep traps down throughout.", overload: "Hit 3×8 → add 2.5 lb per DB next session." },
-      { name: "Lat Pulldown (neutral grip)", sets: 3, reps: "6–8", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Lean back slightly, pull bar to upper chest, lead with elbows not hands. No swinging.", overload: "Hit 3×8 → move up one weight stack increment." },
-      { name: "DB Hammer Curl", sets: 2, reps: "8–10", tempo: "2·1·1", rest: "60 sec", time: "~5 min", form: "Palms face each other throughout. Keep elbows pinned to sides.", overload: "Hit 2×10 → add 2.5 lb per DB." },
-      { name: "Cable Tricep Pushdown (rope)", sets: 2, reps: "8–10", tempo: "2·1·1", rest: "60 sec", time: "~5 min", form: "Flare rope ends outward at bottom, fully extend elbows.", overload: "Hit 2×10 → add one increment on cable stack." },
-    ]
-  },
-  {
-    id: "lower-a", day: "Lower A", tag: "Strength", emoji: "🦵", color: C.red,
-    duration: "50–60 min", focus: "Heavy lower body compounds. Knee & ankle modifications applied.",
-    exercises: [
-      { name: "Hack Squat (heels elevated)", sets: 4, reps: "4–6", tempo: "2·1·1", rest: "3 min", time: "~16 min", form: "Small plate under heels. Chest up, knees track over toes. Stop before depth causes knee pain.", overload: "Hit 4×6 → add 10 lb (5 per side) next session." },
-      { name: "Romanian Deadlift", sets: 3, reps: "6–8", tempo: "2·1·1", rest: "2 min", time: "~10 min", form: "Push hips back, not down. Lower bar along legs until deep hamstring stretch, then drive hips forward.", overload: "Hit 3×8 → add 5–10 lb. Use straps if grip is the limiter." },
-      { name: "Leg Press (limited ROM)", sets: 3, reps: "8–10", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Feet hip-width, mid-platform. Never let lower back round off pad.", overload: "Hit 3×10 → add one plate per side next session." },
-      { name: "Seated Leg Curl", sets: 3, reps: "8–10", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Pad rests just above ankle. Curl fully, hold 1 sec at peak, return slowly.", overload: "Hit 3×10 → add one weight increment." },
-      { name: "Seated Calf Raise", sets: 3, reps: "12–15", tempo: "2·1·2", rest: "60 sec", time: "~6 min", form: "Full range — deep stretch at bottom, full peak contraction at top. No bouncing.", overload: "Hit 3×15 → add small increment." },
-    ]
-  },
-  {
-    id: "upper-b", day: "Upper B", tag: "Hypertrophy", emoji: "💪", color: C.blue,
-    duration: "50–60 min", focus: "Moderate weight, higher reps, shorter rest. Wrist-modified.",
-    exercises: [
-      { name: "Incline DB Press", sets: 4, reps: "10–12", tempo: "2·1·1", rest: "90 sec", time: "~12 min", form: "Bench at 30–45°. Press with palms slightly inward. Don't lock elbows at top.", overload: "Hit 4×12 → add 2.5 lb per DB next session." },
-      { name: "Cable Row (wide grip)", sets: 4, reps: "10–12", tempo: "2·1·1", rest: "90 sec", time: "~12 min", form: "Pull to sternum, elbows flare slightly out. 2-sec controlled return.", overload: "Hit 4×12 → add one increment on stack." },
-      { name: "Cable Lateral Raise", sets: 3, reps: "12–15", tempo: "2·1·1", rest: "60 sec", time: "~7 min", form: "Single arm, low pulley. Raise to just above shoulder — thumb slightly lower than pinky.", overload: "Hit 3×15 → add one cable increment." },
-      { name: "Chest-Supported DB Row", sets: 3, reps: "10–12", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Face down on 45° incline bench. Row to hip level — not chest.", overload: "Hit 3×12 → add 2.5 lb per DB." },
-      { name: "Incline DB Curl", sets: 3, reps: "12–15", tempo: "2·1·1", rest: "60 sec", time: "~7 min", form: "Let arms hang fully behind body for deep stretch. Curl palms up.", overload: "Hit 3×15 → add 2.5 lb per DB." },
-      { name: "Cable Tricep Pushdown (rope)", sets: 3, reps: "12–15", tempo: "2·1·1", rest: "60 sec", time: "~7 min", form: "Full lockout at bottom on every rep. Use rope if wrists are irritated.", overload: "Hit 3×15 → add one cable increment." },
-    ]
-  },
-  {
-    id: "lower-b", day: "Lower B", tag: "Hypertrophy", emoji: "🦵", color: C.red,
-    duration: "50–60 min", focus: "Higher reps, glute & hamstring emphasis. Knee & ankle modifications.",
-    exercises: [
-      { name: "Leg Press (10–12 rep focus)", sets: 4, reps: "10–12", tempo: "2·1·1", rest: "90 sec", time: "~12 min", form: "Lighter than A day, more reps. Feel quad squeeze at top. Pause 1 second before each rep.", overload: "Hit 4×12 → add one plate per side next session." },
-      { name: "Barbell Hip Thrust", sets: 4, reps: "10–12", tempo: "2·1·1", rest: "90 sec", time: "~12 min", form: "Upper back on bench, padded bar across hips. Drive through heels, squeeze glutes hard at top.", overload: "Hit 4×12 → add 10 lb to bar. Use a hip pad." },
-      { name: "Reverse Lunge (DB)", sets: 3, reps: "12/leg", tempo: "2·1·1", rest: "90 sec", time: "~9 min", form: "Step BACK not forward. Rear knee lowers to just above floor. Front shin stays vertical.", overload: "Hit 3×12/leg → add 2.5 lb per DB." },
-      { name: "Leg Extension", sets: 3, reps: "12–15", tempo: "2·1·2", rest: "60 sec", time: "~7 min", form: "Knees at machine's exact pivot point. Full extension with 1-sec squeeze at top.", overload: "Hit 3×15 → add one weight increment." },
-      { name: "Lying or Seated Leg Curl", sets: 3, reps: "12–15", tempo: "2·1·1", rest: "60 sec", time: "~7 min", form: "Full range. Dorsiflex foot (toes toward shin) to increase hamstring activation.", overload: "Hit 3×15 → add one increment." },
-      { name: "Seated Calf Raise", sets: 3, reps: "15–20", tempo: "2·1·2", rest: "60 sec", time: "~7 min", form: "Slow and full range. Genuine stretch at the bottom — don't bounce.", overload: "Hit 3×20 → add small weight increment." },
-    ]
-  },
+  {id:"upper-a",day:"Upper A",tag:"Strength",emoji:"💪",color:C.blue,duration:"55–65 min",focus:"Heavy compounds, low reps, full recovery. Wrist-modified.",exercises:[
+    {name:"DB Bench Press",sets:4,reps:"4–6",repMin:4,repMax:6,tempo:"2·1·1",rest:150,restLabel:"2–3 min",time:"~14 min",form:"Retract shoulder blades into the bench. Lower DBs until elbows are just below chest — don't let wrists collapse inward.",overload:"Hit 4×6 → add 2.5 lb per DB next session."},
+    {name:"Cable Row (neutral grip)",sets:4,reps:"4–6",repMin:4,repMax:6,tempo:"2·1·1",rest:150,restLabel:"2–3 min",time:"~14 min",form:"Sit tall, pull handle to lower chest, squeeze shoulder blades at end. Don't round lower back on return.",overload:"Hit 4×6 → add one plate increment next session."},
+    {name:"Seated DB Shoulder Press",sets:3,reps:"6–8",repMin:6,repMax:8,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Press with palms facing slightly inward (neutral grip). Don't shrug — keep traps down throughout.",overload:"Hit 3×8 → add 2.5 lb per DB next session."},
+    {name:"Lat Pulldown (neutral grip)",sets:3,reps:"6–8",repMin:6,repMax:8,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Lean back slightly, pull bar to upper chest, lead with elbows not hands. No swinging.",overload:"Hit 3×8 → move up one weight stack increment."},
+    {name:"DB Hammer Curl",sets:2,reps:"8–10",repMin:8,repMax:10,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~5 min",form:"Palms face each other throughout. Keep elbows pinned to sides.",overload:"Hit 2×10 → add 2.5 lb per DB."},
+    {name:"Cable Tricep Pushdown (rope)",sets:2,reps:"8–10",repMin:8,repMax:10,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~5 min",form:"Flare rope ends outward at bottom, fully extend elbows.",overload:"Hit 2×10 → add one increment on cable stack."},
+  ]},
+  {id:"lower-a",day:"Lower A",tag:"Strength",emoji:"🦵",color:C.red,duration:"50–60 min",focus:"Heavy lower body compounds. Knee & ankle modifications applied.",exercises:[
+    {name:"Hack Squat (heels elevated)",sets:4,reps:"4–6",repMin:4,repMax:6,tempo:"2·1·1",rest:180,restLabel:"3 min",time:"~16 min",form:"Small plate under heels. Chest up, knees track over toes. Stop before depth causes knee pain.",overload:"Hit 4×6 → add 10 lb (5 per side) next session."},
+    {name:"Romanian Deadlift",sets:3,reps:"6–8",repMin:6,repMax:8,tempo:"2·1·1",rest:120,restLabel:"2 min",time:"~10 min",form:"Push hips back, not down. Lower bar along legs until deep hamstring stretch, then drive hips forward.",overload:"Hit 3×8 → add 5–10 lb. Use straps if grip is the limiter."},
+    {name:"Leg Press (limited ROM)",sets:3,reps:"8–10",repMin:8,repMax:10,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Feet hip-width, mid-platform. Never let lower back round off pad.",overload:"Hit 3×10 → add one plate per side next session."},
+    {name:"Seated Leg Curl",sets:3,reps:"8–10",repMin:8,repMax:10,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Pad rests just above ankle. Curl fully, hold 1 sec at peak, return slowly.",overload:"Hit 3×10 → add one weight increment."},
+    {name:"Seated Calf Raise",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·2",rest:60,restLabel:"60 sec",time:"~6 min",form:"Full range — deep stretch at bottom, full peak contraction at top. No bouncing.",overload:"Hit 3×15 → add small increment."},
+  ]},
+  {id:"upper-b",day:"Upper B",tag:"Hypertrophy",emoji:"💪",color:C.blue,duration:"50–60 min",focus:"Moderate weight, higher reps, shorter rest. Wrist-modified.",exercises:[
+    {name:"Incline DB Press",sets:4,reps:"10–12",repMin:10,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~12 min",form:"Bench at 30–45°. Press with palms slightly inward. Don't lock elbows at top.",overload:"Hit 4×12 → add 2.5 lb per DB next session."},
+    {name:"Cable Row (wide grip)",sets:4,reps:"10–12",repMin:10,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~12 min",form:"Pull to sternum, elbows flare slightly out. 2-sec controlled return.",overload:"Hit 4×12 → add one increment on stack."},
+    {name:"Cable Lateral Raise",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~7 min",form:"Single arm, low pulley. Raise to just above shoulder — thumb slightly lower than pinky.",overload:"Hit 3×15 → add one cable increment."},
+    {name:"Chest-Supported DB Row",sets:3,reps:"10–12",repMin:10,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Face down on 45° incline bench. Row to hip level — not chest.",overload:"Hit 3×12 → add 2.5 lb per DB."},
+    {name:"Incline DB Curl",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~7 min",form:"Let arms hang fully behind body for deep stretch. Curl palms up.",overload:"Hit 3×15 → add 2.5 lb per DB."},
+    {name:"Cable Tricep Pushdown (rope)",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~7 min",form:"Full lockout at bottom on every rep. Use rope if wrists are irritated.",overload:"Hit 3×15 → add one cable increment."},
+  ]},
+  {id:"lower-b",day:"Lower B",tag:"Hypertrophy",emoji:"🦵",color:C.red,duration:"50–60 min",focus:"Higher reps, glute & hamstring emphasis. Knee & ankle modifications.",exercises:[
+    {name:"Leg Press (10–12 rep focus)",sets:4,reps:"10–12",repMin:10,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~12 min",form:"Lighter than A day. Feel quad squeeze at top. Pause 1 second before each rep.",overload:"Hit 4×12 → add one plate per side next session."},
+    {name:"Barbell Hip Thrust",sets:4,reps:"10–12",repMin:10,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~12 min",form:"Upper back on bench, padded bar across hips. Drive through heels, squeeze glutes hard at top.",overload:"Hit 4×12 → add 10 lb to bar. Use a hip pad."},
+    {name:"Reverse Lunge (DB)",sets:3,reps:"12/leg",repMin:12,repMax:12,tempo:"2·1·1",rest:90,restLabel:"90 sec",time:"~9 min",form:"Step BACK not forward. Rear knee lowers to just above floor. Front shin stays vertical.",overload:"Hit 3×12/leg → add 2.5 lb per DB."},
+    {name:"Leg Extension",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·2",rest:60,restLabel:"60 sec",time:"~7 min",form:"Knees at machine's exact pivot point. Full extension with 1-sec squeeze at top.",overload:"Hit 3×15 → add one weight increment."},
+    {name:"Lying or Seated Leg Curl",sets:3,reps:"12–15",repMin:12,repMax:15,tempo:"2·1·1",rest:60,restLabel:"60 sec",time:"~7 min",form:"Full range. Dorsiflex foot (toes toward shin) to increase hamstring activation.",overload:"Hit 3×15 → add one increment."},
+    {name:"Seated Calf Raise",sets:3,reps:"15–20",repMin:15,repMax:20,tempo:"2·1·2",rest:60,restLabel:"60 sec",time:"~7 min",form:"Slow and full range. Genuine stretch at the bottom — don't bounce.",overload:"Hit 3×20 → add small weight increment."},
+  ]},
 ];
 
-const schedule = [
-  { day: "MON", label: "Upper A", sub: "Strength", workoutId: "upper-a" },
-  { day: "TUE", label: "Lower A", sub: "Strength", workoutId: "lower-a" },
-  { day: "WED", label: "Rest", sub: "Optional cardio", workoutId: null },
-  { day: "THU", label: "Upper B", sub: "Hypertrophy", workoutId: "upper-b" },
-  { day: "FRI", label: "Lower B", sub: "Hypertrophy", workoutId: "lower-b" },
-  { day: "SAT", label: "Rest", sub: "Optional cardio", workoutId: null },
-  { day: "SUN", label: "Full Rest", sub: "Sleep & recover", workoutId: null },
+const schedule=[
+  {day:"MON",label:"Upper A",sub:"Strength",workoutId:"upper-a"},
+  {day:"TUE",label:"Lower A",sub:"Strength",workoutId:"lower-a"},
+  {day:"WED",label:"Rest",sub:"Optional cardio",workoutId:null},
+  {day:"THU",label:"Upper B",sub:"Hypertrophy",workoutId:"upper-b"},
+  {day:"FRI",label:"Lower B",sub:"Hypertrophy",workoutId:"lower-b"},
+  {day:"SAT",label:"Rest",sub:"Optional cardio",workoutId:null},
+  {day:"SUN",label:"Full Rest",sub:"Sleep & recover",workoutId:null},
 ];
 
-const guidelines = [
-  { icon: "⏱", label: "Rep Tempo", value: "2s down · 1s pause · 1s up (every exercise)" },
-  { icon: "💤", label: "Rest – Strength days", value: "2–3 minutes between sets" },
-  { icon: "🔥", label: "Rest – Hypertrophy days", value: "60–90 seconds between sets" },
-  { icon: "📈", label: "Overload Method", value: "Hit top of rep range on ALL sets → add weight next session. Upper: +2.5 lb, Lower: +5–10 lb." },
-  { icon: "🔄", label: "Deload", value: "Every 6–8 weeks, drop all weights 40–50% for one full week." },
-  { icon: "🏃", label: "Cardio (optional)", value: "2–3× per week: 25–35 min incline treadmill walk on rest days." },
-  { icon: "📅", label: "Plan Duration", value: "Minimum 12 weeks. Switch exercises, not the structure. Upper/Lower works long-term." },
-  { icon: "⚖️", label: "Starting Weight", value: "Weeks 1–2: moderate effort only. Joints need to adapt before you push intensity." },
+const guidelines=[
+  {icon:"⏱",label:"Rep Tempo",value:"2s down · 1s pause · 1s up (every exercise)"},
+  {icon:"💤",label:"Rest – Strength days",value:"2–3 minutes between sets"},
+  {icon:"🔥",label:"Rest – Hypertrophy days",value:"60–90 seconds between sets"},
+  {icon:"📈",label:"Overload Method",value:"Hit top of rep range on ALL sets → add weight next session. Upper: +2.5 lb, Lower: +5–10 lb."},
+  {icon:"🔄",label:"Deload",value:"Every 6–8 weeks, drop all weights 40–50% for one full week."},
+  {icon:"🏃",label:"Cardio (optional)",value:"2–3× per week: 25–35 min incline treadmill walk on rest days."},
+  {icon:"📅",label:"Plan Duration",value:"Minimum 12 weeks. Switch exercises, not the structure."},
+  {icon:"⚖️",label:"Starting Weight",value:"Weeks 1–2: moderate effort only. Joints need to adapt before you push intensity."},
 ];
 
-// ── Storage ────────────────────────────────────────────────────
-function loadData(key, fallback) {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-  catch { return fallback; }
+function load(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb;}catch{return fb;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+function buildReport(workout,lastSession){
+  if(!lastSession||!lastSession.sets) return null;
+  return workout.exercises.map((ex,i)=>{
+    const prevSets=(lastSession.sets[i]||[]).filter(s=>s.done&&s.weight&&s.reps);
+    if(!prevSets.length) return {name:ex.name,msg:"No data from last session — start conservative.",color:C.muted,weight:null};
+    const weights=prevSets.map(s=>parseFloat(s.weight));
+    const reps=prevSets.map(s=>parseInt(s.reps));
+    const avgW=weights.reduce((a,b)=>a+b,0)/weights.length;
+    const isUpper=workout.id.includes("upper");
+    const inc=isUpper?2.5:5;
+    const allTop=reps.every(r=>r>=ex.repMax);
+    const mostTop=reps.filter(r=>r>=ex.repMax).length>=Math.ceil(reps.length*0.75);
+    const someBelow=reps.some(r=>r<ex.repMin);
+    const minR=Math.min(...reps); const maxR=Math.max(...reps);
+    if(allTop) return {name:ex.name,msg:`All sets hit ${ex.repMax} reps @ ${avgW} lb — go to ${avgW+inc} lb today. 🔼`,color:C.accent,weight:avgW+inc};
+    if(mostTop) return {name:ex.name,msg:`Most sets hit top reps @ ${avgW} lb — try ${avgW+inc} lb. 📈`,color:C.green,weight:avgW+inc};
+    if(someBelow) return {name:ex.name,msg:`Some sets dropped below ${ex.repMin} reps @ ${avgW} lb — stay at ${avgW} lb, fix form first. 🎯`,color:C.gold,weight:avgW};
+    return {name:ex.name,msg:`Hit ${minR}–${maxR} reps @ ${avgW} lb — stay at ${avgW} lb, push for ${ex.repMax} every set. 💪`,color:C.blue,weight:avgW};
+  });
 }
-function saveData(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+
+function Badge({tag,color}){
+  return <span style={{fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",padding:"3px 8px",borderRadius:4,border:`1px solid ${color}33`,color,background:`${color}15`}}>{tag}</span>;
 }
 
-// ── Shared Components ──────────────────────────────────────────
-function Badge({ tag, color }) {
-  return <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 4, border: `1px solid ${color}33`, color, background: `${color}15` }}>{tag}</span>;
-}
-
-// ── Morning Routine: Guided Mode ───────────────────────────────
-function GuidedRoutine({ onClose, onComplete }) {
-  const [step, setStep] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(morningMoves[0].duration);
-  const [running, setRunning] = useState(false);
-  const [done, setDone] = useState(false);
-  const intervalRef = useRef(null);
-  const move = morningMoves[step];
-
-  useEffect(() => {
-    setTimeLeft(morningMoves[step].duration);
-    setRunning(false);
-    clearInterval(intervalRef.current);
-  }, [step]);
-
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft(t => {
-          if (t <= 1) {
-            clearInterval(intervalRef.current);
-            setRunning(false);
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
-    } else clearInterval(intervalRef.current);
-    return () => clearInterval(intervalRef.current);
-  }, [running]);
-
-  const progress = 1 - timeLeft / move.duration;
-  const mins = Math.floor(timeLeft / 60);
-  const secs = String(timeLeft % 60).padStart(2, "0");
-
-  const next = () => {
-    if (step < morningMoves.length - 1) setStep(s => s + 1);
-    else { setDone(true); onComplete && onComplete(); }
-  };
-
-  if (done) return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, animation: "fadeIn 0.4s ease" }}>
-      <div style={{ fontSize: 72, marginBottom: 24 }}>🌅</div>
-      <div style={{ fontSize: 28, fontWeight: 800, color: C.text, fontFamily: "'DM Sans', sans-serif", marginBottom: 12 }}>Morning complete.</div>
-      <div style={{ fontSize: 15, color: C.muted, textAlign: "center", lineHeight: 1.7, marginBottom: 40 }}>You gave your body what it needed before the day even started. That's the move.</div>
-      <button onClick={onClose} style={{ background: C.accent, border: "none", color: C.bg, fontWeight: 800, fontSize: 16, padding: "16px 40px", borderRadius: 14, cursor: "pointer" }}>Done</button>
-    </div>
-  );
-
-  // Circumference for SVG circle
-  const R = 54;
-  const circ = 2 * Math.PI * R;
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 200, display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12, background: C.surface }}>
-        <button onClick={onClose} style={{ background: C.dimmed, border: "none", color: C.muted, width: 36, height: 36, borderRadius: 8, cursor: "pointer", fontSize: 16 }}>✕</button>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: C.text }}>Morning Flow</div>
-          <div style={{ fontSize: 11, color: C.muted }}>Move {step + 1} of {morningMoves.length}</div>
-        </div>
-        {/* Mini progress dots */}
-        <div style={{ display: "flex", gap: 4 }}>
-          {morningMoves.map((_, i) => (
-            <div key={i} style={{ width: i === step ? 16 : 6, height: 6, borderRadius: 3, background: i < step ? C.accent : i === step ? C.purple : C.dimmed, transition: "all 0.3s" }} />
-          ))}
-        </div>
+function RestTimer({seconds,onDone}){
+  const [left,setLeft]=useState(seconds);
+  const ref=useRef();
+  useEffect(()=>{
+    ref.current=setInterval(()=>setLeft(t=>{if(t<=1){clearInterval(ref.current);onDone&&onDone();return 0;}return t-1;}),1000);
+    return()=>clearInterval(ref.current);
+  },[]);
+  const R=26;const circ=2*Math.PI*R;const pct=left/seconds;
+  const m=Math.floor(left/60);const s=String(left%60).padStart(2,"0");
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:12,background:`${C.red}18`,border:`1px solid ${C.red}40`,borderRadius:10,padding:"10px 14px",animation:"slideUp 0.2s ease"}}>
+      <div style={{position:"relative",width:56,height:56,flexShrink:0}}>
+        <svg width="56" height="56" style={{transform:"rotate(-90deg)"}}>
+          <circle cx="28" cy="28" r={R} fill="none" stroke={C.dimmed} strokeWidth="4"/>
+          <circle cx="28" cy="28" r={R} fill="none" stroke={C.red} strokeWidth="4" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear"}}/>
+        </svg>
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:C.red}}>{m>0?`${m}:${s}`:`${left}s`}</div>
       </div>
-
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px 100px" }}>
-        {/* Move header */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontSize: 56, marginBottom: 12 }}>{move.emoji}</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: C.text, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>{move.name}</div>
-          <Badge tag={move.category} color={C.purple} />
-        </div>
-
-        {/* Timer circle */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-          <div style={{ position: "relative", width: 140, height: 140 }}>
-            <svg width="140" height="140" style={{ transform: "rotate(-90deg)" }}>
-              <circle cx="70" cy="70" r={R} fill="none" stroke={C.dimmed} strokeWidth="6" />
-              <circle cx="70" cy="70" r={R} fill="none" stroke={running ? C.purple : C.muted} strokeWidth="6"
-                strokeDasharray={circ} strokeDashoffset={circ * (1 - progress)}
-                strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s linear, stroke 0.3s" }} />
-            </svg>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontSize: 30, fontWeight: 800, color: running ? C.text : C.muted, fontFamily: "'DM Sans', sans-serif" }}>{mins > 0 ? `${mins}:${secs}` : `${timeLeft}s`}</div>
-              <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>remaining</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginBottom: 28 }}>
-          <button onClick={() => setRunning(r => !r)} style={{
-            background: running ? `${C.purple}22` : C.purple, border: `1px solid ${C.purple}60`,
-            color: running ? C.purple : C.bg, fontWeight: 800, fontSize: 14,
-            padding: "12px 28px", borderRadius: 10, cursor: "pointer",
-            animation: running ? "none" : "pulse 2s infinite",
-          }}>{running ? "⏸ Pause" : timeLeft < move.duration ? "▶ Resume" : "▶ Start"}</button>
-          <button onClick={next} style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontWeight: 700, fontSize: 14, padding: "12px 20px", borderRadius: 10, cursor: "pointer" }}>
-            {step < morningMoves.length - 1 ? "Skip →" : "Finish ✓"}
-          </button>
-        </div>
-
-        {/* Description */}
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "18px", marginBottom: 12 }}>
-          <div style={{ color: C.purple, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>How to do it</div>
-          <div style={{ color: C.text, fontSize: 14, lineHeight: 1.7 }}>{move.description}</div>
-        </div>
-
-        <div style={{ background: `${C.accent}0E`, border: `1px solid ${C.accent}25`, borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ color: C.accent, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Cue</div>
-          <div style={{ color: C.text, fontSize: 13, lineHeight: 1.5 }}>{move.cue}</div>
-        </div>
-
-        <div style={{ background: `${C.gold}0E`, border: `1px solid ${C.gold}25`, borderRadius: 12, padding: "14px 16px" }}>
-          <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Why it matters</div>
-          <div style={{ color: C.text, fontSize: 13, lineHeight: 1.5 }}>{move.benefit}</div>
-        </div>
+      <div style={{flex:1}}>
+        <div style={{color:C.red,fontWeight:700,fontSize:13}}>Rest Timer</div>
+        <div style={{color:C.muted,fontSize:12,marginTop:1}}>Next set in {m>0?`${m}:${s}`:`${left}s`}</div>
       </div>
+      <button onClick={onDone} style={{background:C.dimmed,border:"none",color:C.muted,borderRadius:7,padding:"7px 12px",fontSize:12,cursor:"pointer",fontWeight:700}}>Skip</button>
     </div>
   );
 }
 
-// ── Morning Home Screen ────────────────────────────────────────
-function MorningView({ logs, onLogMorning }) {
-  const [guided, setGuided] = useState(false);
-  const [expandedMove, setExpandedMove] = useState(null);
-  const totalTime = morningMoves.reduce((a, m) => a + m.duration, 0);
-  const morningLogs = logs["morning"] || [];
-  const todayStr = new Date().toISOString().split("T")[0];
-  const doneTodayAlready = morningLogs.some(l => l.date === todayStr);
-
-  const handleComplete = () => {
-    onLogMorning();
-    setGuided(false);
-  };
-
-  if (guided) return <GuidedRoutine onClose={() => setGuided(false)} onComplete={handleComplete} />;
-
-  return (
-    <div style={{ animation: "fadeIn 0.3s ease" }}>
-      {/* Hero card */}
-      <div style={{ background: `linear-gradient(135deg, ${C.purple}25, ${C.surface})`, border: `1px solid ${C.purple}35`, borderRadius: 16, padding: "22px", marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-          <span style={{ fontSize: 36 }}>🌅</span>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: C.text, fontFamily: "'DM Sans', sans-serif" }}>Morning Flow</div>
-            <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>Slow · Meditative · Floor-based</div>
-          </div>
-        </div>
-        <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.6, marginBottom: 16 }}>
-          8 moves · ~{Math.round(totalTime / 60)} minutes · Designed around your wrists, knees & ankles. Best done right after waking, before coffee.
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {[["🦴", "Joint-friendly"], ["💧", "Lymphatic"], ["🧘", "Breathwork"]].map(([ico, label]) => (
-            <div key={label} style={{ background: C.card, borderRadius: 8, padding: "6px 10px", fontSize: 11, color: C.muted, display: "flex", alignItems: "center", gap: 4 }}>
-              <span>{ico}</span><span>{label}</span>
-            </div>
-          ))}
-        </div>
+function WeightTracker({bwLog,onAdd}){
+  const [input,setInput]=useState("");
+  const sorted=[...bwLog].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const recent=sorted.slice(-8);
+  const handleAdd=()=>{const v=parseFloat(input);if(!v||v<50||v>500)return;onAdd({date:new Date().toISOString().split("T")[0],weight:v});setInput("");};
+  const trend=recent.length>=2?(recent[recent.length-1].weight-recent[0].weight).toFixed(1):null;
+  const maxW=recent.length?Math.max(...recent.map(r=>r.weight)):0;
+  const minW=recent.length?Math.min(...recent.map(r=>r.weight)):0;
+  const range=maxW-minW||1;
+  return(
+    <div style={{animation:"fadeIn 0.3s ease"}}>
+      <div style={{background:`linear-gradient(135deg,${C.green}22,transparent)`,border:`1px solid ${C.green}30`,borderRadius:14,padding:"18px",marginBottom:16}}>
+        <div style={{fontSize:12,color:C.green,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Body Weight</div>
+        <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Log weekly weigh-ins — same time every week, morning before eating, for consistency.</div>
       </div>
-
-      {/* Start button */}
-      <button onClick={() => setGuided(true)} style={{
-        width: "100%", background: doneTodayAlready ? `${C.purple}30` : `linear-gradient(135deg, ${C.purple}, #7C3AED)`,
-        border: `1px solid ${C.purple}50`, borderRadius: 14, padding: "17px",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-        cursor: "pointer", marginBottom: 18,
-        boxShadow: doneTodayAlready ? "none" : `0 4px 20px ${C.purple}35`,
-      }}>
-        <span style={{ fontSize: 20 }}>{doneTodayAlready ? "✅" : "▶"}</span>
-        <span style={{ fontWeight: 800, fontSize: 15, color: doneTodayAlready ? C.purple : C.bg, fontFamily: "'DM Sans', sans-serif" }}>
-          {doneTodayAlready ? "Done today — go again?" : "Begin Morning Flow"}
-        </span>
-      </button>
-
-      {/* Streak */}
-      {morningLogs.length > 0 && (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 28 }}>🔥</span>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 22, color: C.accent }}>{morningLogs.length}</div>
-            <div style={{ fontSize: 12, color: C.muted }}>morning{morningLogs.length !== 1 ? "s" : ""} completed</div>
+      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px",marginBottom:16,display:"flex",gap:10,alignItems:"center"}}>
+        <input type="number" placeholder="Weight (lb)" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleAdd()}
+          style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:15,fontWeight:600}}/>
+        <button onClick={handleAdd} style={{background:C.accent,border:"none",color:C.bg,fontWeight:800,fontSize:13,padding:"10px 20px",borderRadius:8,cursor:"pointer"}}>Log</button>
+      </div>
+      {recent.length>1&&(
+        <>
+          <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
+            <span style={{fontSize:28}}>{trend>0?"📈":trend<0?"📉":"➡️"}</span>
+            <div>
+              <div style={{fontWeight:800,fontSize:20,color:trend<=0?C.accent:C.gold}}>{trend>0?"+":""}{trend} lb</div>
+              <div style={{fontSize:12,color:C.muted}}>since {new Date(recent[0].date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"})}</div>
+            </div>
+            <div style={{marginLeft:"auto",textAlign:"right"}}>
+              <div style={{fontWeight:800,fontSize:18,color:C.text}}>{recent[recent.length-1].weight} lb</div>
+              <div style={{fontSize:12,color:C.muted}}>current</div>
+            </div>
           </div>
+          <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px",marginBottom:16}}>
+            <div style={{fontSize:11,color:C.muted,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:12}}>Trend</div>
+            <div style={{display:"flex",alignItems:"flex-end",gap:5,height:72}}>
+              {recent.map((r,i)=>{
+                const h=Math.max(8,((r.weight-minW)/range)*56+8);
+                const isLatest=i===recent.length-1;
+                return(
+                  <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                    <div style={{width:"100%",height:h,background:isLatest?C.accent:`${C.green}55`,borderRadius:"3px 3px 0 0",transition:"height 0.3s"}}/>
+                    <div style={{fontSize:9,color:C.muted,textAlign:"center"}}>{new Date(r.date+"T12:00:00").toLocaleDateString("en-CA",{month:"numeric",day:"numeric"})}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+      {sorted.slice().reverse().slice(0,10).map((r,i)=>(
+        <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:13,color:C.muted}}>{new Date(r.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})}</div>
+          <div style={{fontWeight:800,fontSize:16,color:C.text}}>{r.weight} <span style={{fontSize:12,color:C.muted,fontWeight:400}}>lb</span></div>
+        </div>
+      ))}
+      {!bwLog.length&&(
+        <div style={{textAlign:"center",padding:"40px 20px",color:C.muted}}>
+          <div style={{fontSize:36,marginBottom:12}}>⚖️</div>
+          <div style={{fontSize:14,color:C.text,fontWeight:700,marginBottom:6}}>No weigh-ins yet</div>
+          <div style={{fontSize:13,lineHeight:1.6}}>Log your first weight above. Once a week, same conditions.</div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Move list preview */}
-      <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>The 8 Moves</div>
-      {morningMoves.map((move, i) => (
-        <div key={i} style={{ background: expandedMove === i ? "#1F1F28" : C.card, border: `1px solid ${expandedMove === i ? C.dimmed : C.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden", transition: "all 0.2s" }}>
-          <button onClick={() => setExpandedMove(expandedMove === i ? null : i)} style={{ width: "100%", background: "none", border: "none", padding: "13px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 22, flexShrink: 0 }}>{move.emoji}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{move.name}</div>
-              <div style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>{move.category} · {move.duration}s</div>
+function GuidedRoutine({onClose,onComplete}){
+  const [step,setStep]=useState(0);
+  const [timeLeft,setTimeLeft]=useState(morningMoves[0].duration);
+  const [running,setRunning]=useState(false);
+  const [done,setDone]=useState(false);
+  const ref=useRef();
+  const move=morningMoves[step];
+  useEffect(()=>{setTimeLeft(morningMoves[step].duration);setRunning(false);clearInterval(ref.current);},[step]);
+  useEffect(()=>{if(running){ref.current=setInterval(()=>setLeft(t=>{if(t<=1){clearInterval(ref.current);setRunning(false);return 0;}return t-1;}),1000);}else clearInterval(ref.current);return()=>clearInterval(ref.current);},[running]);
+  // use separate setLeft alias
+  const setLeft=(fn)=>setTimeLeft(fn);
+  const R=54;const circ=2*Math.PI*R;
+  const pct=1-timeLeft/move.duration;
+  const m=Math.floor(timeLeft/60);const s=String(timeLeft%60).padStart(2,"0");
+  const next=()=>{if(step<morningMoves.length-1)setStep(st=>st+1);else{setDone(true);onComplete&&onComplete();}};
+  if(done) return(
+    <div style={{position:"fixed",inset:0,background:C.bg,zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,animation:"fadeIn 0.4s ease"}}>
+      <div style={{fontSize:72,marginBottom:24}}>🌅</div>
+      <div style={{fontSize:28,fontWeight:800,color:C.text,marginBottom:12}}>Morning complete.</div>
+      <div style={{fontSize:15,color:C.muted,textAlign:"center",lineHeight:1.7,marginBottom:40}}>You gave your body what it needed before the day even started.</div>
+      <button onClick={onClose} style={{background:C.accent,border:"none",color:C.bg,fontWeight:800,fontSize:16,padding:"16px 40px",borderRadius:14,cursor:"pointer"}}>Done</button>
+    </div>
+  );
+  return(
+    <div style={{position:"fixed",inset:0,background:C.bg,zIndex:200,display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12,background:C.surface,flexShrink:0}}>
+        <button onClick={onClose} style={{background:C.dimmed,border:"none",color:C.muted,width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16}}>✕</button>
+        <div style={{flex:1}}><div style={{fontWeight:800,fontSize:15,color:C.text}}>Morning Flow</div><div style={{fontSize:11,color:C.muted}}>Move {step+1} of {morningMoves.length}</div></div>
+        <div style={{display:"flex",gap:4}}>{morningMoves.map((_,i)=><div key={i} style={{width:i===step?16:6,height:6,borderRadius:3,background:i<step?C.accent:i===step?C.purple:C.dimmed,transition:"all 0.3s"}}/>)}</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"24px 20px 40px"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:56,marginBottom:12}}>{move.emoji}</div>
+          <div style={{fontSize:22,fontWeight:800,color:C.text,marginBottom:8}}>{move.name}</div>
+          <Badge tag={move.category} color={C.purple}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:28}}>
+          <div style={{position:"relative",width:140,height:140}}>
+            <svg width="140" height="140" style={{transform:"rotate(-90deg)"}}>
+              <circle cx="70" cy="70" r={R} fill="none" stroke={C.dimmed} strokeWidth="6"/>
+              <circle cx="70" cy="70" r={R} fill="none" stroke={running?C.purple:C.muted} strokeWidth="6" strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round" style={{transition:"stroke-dashoffset 1s linear,stroke 0.3s"}}/>
+            </svg>
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontSize:30,fontWeight:800,color:running?C.text:C.muted}}>{m>0?`${m}:${s}`:`${timeLeft}s`}</div>
+              <div style={{fontSize:11,color:C.muted,marginTop:2}}>remaining</div>
             </div>
-            <span style={{ color: C.muted, fontSize: 16, transition: "transform 0.2s", transform: expandedMove === i ? "rotate(180deg)" : "rotate(0)" }}>⌄</span>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:28}}>
+          <button onClick={()=>setRunning(r=>!r)} style={{background:running?`${C.purple}22`:C.purple,border:`1px solid ${C.purple}60`,color:running?C.purple:C.bg,fontWeight:800,fontSize:14,padding:"12px 28px",borderRadius:10,cursor:"pointer"}}>
+            {running?"⏸ Pause":timeLeft<move.duration?"▶ Resume":"▶ Start"}
           </button>
-          {expandedMove === i && (
-            <div style={{ padding: "0 16px 14px" }}>
-              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.6, marginBottom: 10 }}>{move.description}</div>
-              <div style={{ background: `${C.accent}0E`, border: `1px solid ${C.accent}20`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
-                <span style={{ color: C.accent, fontWeight: 700 }}>Why: </span>{move.benefit}
-              </div>
-            </div>
-          )}
+          <button onClick={next} style={{background:C.card,border:`1px solid ${C.border}`,color:C.muted,fontWeight:700,fontSize:14,padding:"12px 20px",borderRadius:10,cursor:"pointer"}}>{step<morningMoves.length-1?"Skip →":"Finish ✓"}</button>
+        </div>
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"18px",marginBottom:12}}>
+          <div style={{color:C.purple,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>How to do it</div>
+          <div style={{color:C.text,fontSize:14,lineHeight:1.7}}>{move.description}</div>
+        </div>
+        <div style={{background:`${C.accent}0E`,border:`1px solid ${C.accent}25`,borderRadius:12,padding:"14px 16px",marginBottom:12}}>
+          <div style={{color:C.accent,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Cue</div>
+          <div style={{color:C.text,fontSize:13,lineHeight:1.5}}>{move.cue}</div>
+        </div>
+        <div style={{background:`${C.gold}0E`,border:`1px solid ${C.gold}25`,borderRadius:12,padding:"14px 16px"}}>
+          <div style={{color:C.gold,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Why it matters</div>
+          <div style={{color:C.text,fontSize:13,lineHeight:1.5}}>{move.benefit}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MorningView({logs,onLogMorning}){
+  const [guided,setGuided]=useState(false);
+  const [expanded,setExpanded]=useState(null);
+  const ml=logs["morning"]||[];
+  const today=new Date().toISOString().split("T")[0];
+  const doneToday=ml.some(l=>l.date===today);
+  if(guided) return <GuidedRoutine onClose={()=>setGuided(false)} onComplete={()=>{onLogMorning();setGuided(false);}}/>;
+  return(
+    <div style={{animation:"fadeIn 0.3s ease"}}>
+      <div style={{background:`linear-gradient(135deg,${C.purple}25,${C.surface})`,border:`1px solid ${C.purple}35`,borderRadius:16,padding:"22px",marginBottom:18}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}><span style={{fontSize:36}}>🌅</span><div><div style={{fontSize:20,fontWeight:800,color:C.text}}>Morning Flow</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>Slow · Meditative · Floor-based</div></div></div>
+        <div style={{color:C.muted,fontSize:13,lineHeight:1.6,marginBottom:16}}>8 moves · ~9 minutes · Joint-friendly throughout.</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{[["🦴","Joint-friendly"],["💧","Lymphatic"],["🧘","Breathwork"]].map(([ico,label])=><div key={label} style={{background:C.card,borderRadius:8,padding:"6px 10px",fontSize:11,color:C.muted,display:"flex",alignItems:"center",gap:4}}><span>{ico}</span><span>{label}</span></div>)}</div>
+      </div>
+      <button onClick={()=>setGuided(true)} style={{width:"100%",background:doneToday?`${C.purple}30`:`linear-gradient(135deg,${C.purple},#7C3AED)`,border:`1px solid ${C.purple}50`,borderRadius:14,padding:"17px",display:"flex",alignItems:"center",justifyContent:"center",gap:10,cursor:"pointer",marginBottom:18,boxShadow:doneToday?"none":`0 4px 20px ${C.purple}35`}}>
+        <span style={{fontSize:20}}>{doneToday?"✅":"▶"}</span>
+        <span style={{fontWeight:800,fontSize:15,color:doneToday?C.purple:C.bg}}>{doneToday?"Done today — go again?":"Begin Morning Flow"}</span>
+      </button>
+      {ml.length>0&&<div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px",marginBottom:18,display:"flex",alignItems:"center",gap:14}}><span style={{fontSize:28}}>🔥</span><div><div style={{fontWeight:800,fontSize:22,color:C.accent}}>{ml.length}</div><div style={{fontSize:12,color:C.muted}}>morning{ml.length!==1?"s":""} completed</div></div></div>}
+      <div style={{fontSize:12,color:C.muted,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>The 8 Moves</div>
+      {morningMoves.map((move,i)=>(
+        <div key={i} style={{background:expanded===i?"#1F1F28":C.card,border:`1px solid ${expanded===i?C.dimmed:C.border}`,borderRadius:10,marginBottom:8,overflow:"hidden",transition:"all 0.2s"}}>
+          <button onClick={()=>setExpanded(expanded===i?null:i)} style={{width:"100%",background:"none",border:"none",padding:"13px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:22,flexShrink:0}}>{move.emoji}</span>
+            <div style={{flex:1}}><div style={{color:C.text,fontWeight:600,fontSize:14}}>{move.name}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{move.category} · {move.duration}s</div></div>
+            <span style={{color:C.muted,fontSize:16,transition:"transform 0.2s",transform:expanded===i?"rotate(180deg)":"rotate(0)"}}>⌄</span>
+          </button>
+          {expanded===i&&<div style={{padding:"0 16px 14px"}}><div style={{color:C.text,fontSize:13,lineHeight:1.6,marginBottom:10}}>{move.description}</div><div style={{background:`${C.accent}0E`,border:`1px solid ${C.accent}20`,borderRadius:8,padding:"10px 12px",fontSize:12,color:C.muted,lineHeight:1.5}}><span style={{color:C.accent,fontWeight:700}}>Why: </span>{move.benefit}</div></div>}
         </div>
       ))}
     </div>
   );
 }
 
-// ── Log Modal ──────────────────────────────────────────────────
-function LogModal({ workout, existingLog, onSave, onClose }) {
-  const today = new Date().toISOString().split("T")[0];
-  const [date, setDate] = useState(existingLog?.date || today);
-  const [notes, setNotes] = useState(existingLog?.notes || "");
-  const [sets, setSets] = useState(() => {
-    if (existingLog?.sets) return existingLog.sets;
-    return workout.exercises.map(ex => Array.from({ length: ex.sets }, () => ({ weight: "", reps: "", done: false })));
+function LogModal({workout,existingLog,draft,onDraftChange,onSave,onClose}){
+  const today=new Date().toISOString().split("T")[0];
+  const [date,setDate]=useState(draft?.date||existingLog?.date||today);
+  const [notes,setNotes]=useState(draft?.notes||existingLog?.notes||"");
+  const [energy,setEnergy]=useState(draft?.energy||existingLog?.energy||3);
+  const [sets,setSets]=useState(()=>{
+    if(draft?.sets) return draft.sets;
+    if(existingLog?.sets) return existingLog.sets;
+    return workout.exercises.map(ex=>Array.from({length:ex.sets},()=>({weight:"",reps:"",done:false})));
   });
-  const [energy, setEnergy] = useState(existingLog?.energy || 3);
+  const [activeTimer,setActiveTimer]=useState(null);
 
-  const updateSet = (exI, setI, field, val) => {
-    setSets(prev => {
-      const next = prev.map(e => [...e]);
-      next[exI] = next[exI].map((s, i) => i === setI ? { ...s, [field]: val } : s);
+  useEffect(()=>{ onDraftChange({date,notes,energy,sets}); },[JSON.stringify({date,notes,energy,sets})]);
+
+  const updateSet=(exI,setI,field,val)=>{
+    setSets(prev=>{const next=prev.map(e=>[...e]);next[exI]=next[exI].map((s,i)=>i===setI?{...s,[field]:val}:s);return next;});
+  };
+  const toggleDone=(exI,setI)=>{
+    setSets(prev=>{
+      const next=prev.map(e=>[...e]);
+      const wasDone=next[exI][setI].done;
+      next[exI]=next[exI].map((s,i)=>i===setI?{...s,done:!s.done}:s);
+      if(!wasDone) setActiveTimer({seconds:workout.exercises[exI].rest});
       return next;
     });
   };
-  const toggleDone = (exI, setI) => {
-    setSets(prev => {
-      const next = prev.map(e => [...e]);
-      next[exI] = next[exI].map((s, i) => i === setI ? { ...s, done: !s.done } : s);
-      return next;
-    });
-  };
 
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", flexDirection: "column", background: C.bg }}>
-      <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12, background: C.surface }}>
-        <button onClick={onClose} style={{ background: C.dimmed, border: "none", color: C.muted, width: 36, height: 36, borderRadius: 8, cursor: "pointer", fontSize: 16 }}>✕</button>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 800, fontSize: 16, color: C.text }}>Log Session</div>
-          <div style={{ fontSize: 12, color: C.muted }}>{workout.day}</div>
-        </div>
-        <button onClick={() => onSave({ date, notes, sets, energy })} style={{ background: C.accent, border: "none", color: C.bg, fontWeight: 800, fontSize: 13, padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>Save</button>
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:100,display:"flex",flexDirection:"column",background:C.bg}}>
+      <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12,background:C.surface,flexShrink:0}}>
+        <button onClick={onClose} style={{background:C.dimmed,border:"none",color:C.muted,width:36,height:36,borderRadius:8,cursor:"pointer",fontSize:16}}>✕</button>
+        <div style={{flex:1}}><div style={{fontWeight:800,fontSize:16,color:C.text}}>Log Session</div><div style={{fontSize:12,color:C.muted}}>{workout.day}</div></div>
+        <button onClick={()=>onSave({date,notes,sets,energy})} style={{background:C.accent,border:"none",color:C.bg,fontWeight:800,fontSize:13,padding:"8px 16px",borderRadius:8,cursor:"pointer"}}>Save</button>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+      {activeTimer&&(
+        <div style={{padding:"8px 16px",background:C.surface,borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
+          <RestTimer seconds={activeTimer.seconds} onDone={()=>setActiveTimer(null)}/>
+        </div>
+      )}
+      <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"16px"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
           <div>
-            <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Date</div>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px", color: C.text, fontSize: 13 }} />
+            <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Date</div>
+            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{width:"100%",background:C.card,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13}}/>
           </div>
           <div>
-            <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Energy (1–5)</div>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[1,2,3,4,5].map(n => (
-                <button key={n} onClick={() => setEnergy(n)} style={{ flex: 1, height: 38, background: energy >= n ? `${C.gold}30` : C.card, border: `1px solid ${energy >= n ? C.gold+"60" : C.border}`, borderRadius: 6, color: energy >= n ? C.gold : C.muted, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{n}</button>
-              ))}
-            </div>
+            <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Energy (1–5)</div>
+            <div style={{display:"flex",gap:4}}>{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setEnergy(n)} style={{flex:1,height:38,background:energy>=n?`${C.gold}30`:C.card,border:`1px solid ${energy>=n?C.gold+"60":C.border}`,borderRadius:6,color:energy>=n?C.gold:C.muted,fontWeight:700,fontSize:13,cursor:"pointer"}}>{n}</button>)}</div>
           </div>
         </div>
-        {workout.exercises.map((ex, exI) => (
-          <div key={exI} style={{ marginBottom: 14, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontWeight: 700, color: C.text, fontSize: 13 }}>{ex.name}</div>
-              <div style={{ fontSize: 11, color: C.muted }}>{ex.sets} × {ex.reps}</div>
+        {workout.exercises.map((ex,exI)=>(
+          <div key={exI} style={{marginBottom:14,background:C.card,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
+            <div style={{padding:"12px 14px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontWeight:700,color:C.text,fontSize:13}}>{ex.name}</div>
+              <div style={{fontSize:11,color:C.muted}}>{ex.sets} × {ex.reps}</div>
             </div>
-            <div style={{ padding: "10px 14px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 36px", gap: 6, marginBottom: 6 }}>
-                <div style={{ fontSize: 10, color: C.muted, textAlign: "center" }}>SET</div>
-                <div style={{ fontSize: 10, color: C.muted, textAlign: "center" }}>WEIGHT</div>
-                <div style={{ fontSize: 10, color: C.muted, textAlign: "center" }}>REPS</div>
-                <div />
+            <div style={{padding:"10px 14px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"24px 1fr 1fr 36px",gap:6,marginBottom:6}}>
+                <div style={{fontSize:10,color:C.muted,textAlign:"center"}}>#</div>
+                <div style={{fontSize:10,color:C.muted,textAlign:"center"}}>WEIGHT</div>
+                <div style={{fontSize:10,color:C.muted,textAlign:"center"}}>REPS</div>
+                <div/>
               </div>
-              {sets[exI].map((s, setI) => (
-                <div key={setI} style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 36px", gap: 6, marginBottom: 6, alignItems: "center" }}>
-                  <div style={{ textAlign: "center", fontSize: 12, fontWeight: 700, color: s.done ? C.accent : C.muted }}>{setI + 1}</div>
-                  <input type="number" placeholder="lb" value={s.weight} onChange={e => updateSet(exI, setI, "weight", e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "9px 10px", color: C.text, fontSize: 14, fontWeight: 600, textAlign: "center", width: "100%" }} />
-                  <input type="number" placeholder="reps" value={s.reps} onChange={e => updateSet(exI, setI, "reps", e.target.value)} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 7, padding: "9px 10px", color: C.text, fontSize: 14, fontWeight: 600, textAlign: "center", width: "100%" }} />
-                  <button onClick={() => toggleDone(exI, setI)} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${s.done ? C.accent+"60" : C.border}`, background: s.done ? `${C.accent}25` : C.surface, color: s.done ? C.accent : C.muted, cursor: "pointer", fontSize: 14 }}>✓</button>
+              {sets[exI].map((s,setI)=>(
+                <div key={setI} style={{display:"grid",gridTemplateColumns:"24px 1fr 1fr 36px",gap:6,marginBottom:6,alignItems:"center"}}>
+                  <div style={{textAlign:"center",fontSize:12,fontWeight:700,color:s.done?C.accent:C.muted}}>{setI+1}</div>
+                  <input type="number" placeholder="lb" value={s.weight} onChange={e=>updateSet(exI,setI,"weight",e.target.value)} style={{background:C.surface,border:`1px solid ${s.done?C.accent+"40":C.border}`,borderRadius:7,padding:"9px 10px",color:C.text,fontSize:14,fontWeight:600,textAlign:"center",width:"100%"}}/>
+                  <input type="number" placeholder="reps" value={s.reps} onChange={e=>updateSet(exI,setI,"reps",e.target.value)} style={{background:C.surface,border:`1px solid ${s.done?C.accent+"40":C.border}`,borderRadius:7,padding:"9px 10px",color:C.text,fontSize:14,fontWeight:600,textAlign:"center",width:"100%"}}/>
+                  <button onClick={()=>toggleDone(exI,setI)} style={{width:36,height:36,borderRadius:8,border:`1px solid ${s.done?C.accent+"60":C.border}`,background:s.done?`${C.accent}25`:C.surface,color:s.done?C.accent:C.muted,cursor:"pointer",fontSize:14}}>✓</button>
                 </div>
               ))}
             </div>
           </div>
         ))}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Session Notes</div>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="How did it feel? Any PRs? Anything to note..." rows={3} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px", color: C.text, fontSize: 13, lineHeight: 1.5, resize: "none" }} />
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:10,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Session Notes</div>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="How did it feel? Any PRs? Anything to note..." rows={3} style={{width:"100%",background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 14px",color:C.text,fontSize:13,lineHeight:1.5,resize:"none"}}/>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Exercise Card ──────────────────────────────────────────────
-function ExerciseCard({ ex, index, lastLog }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ background: open ? "#1F1F28" : C.card, border: `1px solid ${open ? C.dimmed : C.border}`, borderRadius: 10, marginBottom: 8, overflow: "hidden", transition: "all 0.2s" }}>
-      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "none", border: "none", padding: "14px 16px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ width: 26, height: 26, borderRadius: 6, background: C.dimmed, color: C.muted, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{index + 1}</span>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{ex.name}</div>
-          <div style={{ color: C.muted, fontSize: 12, marginTop: 2 }}>{ex.sets} sets · {ex.reps} reps · Rest {ex.rest}</div>
-          {lastLog && <div style={{ fontSize: 11, color: C.accent, marginTop: 2 }}>Last: {lastLog.weight ? `${lastLog.weight} lb` : "—"} × {lastLog.reps || "—"} reps</div>}
+function ExerciseCard({ex,index,recommendation}){
+  const [open,setOpen]=useState(false);
+  return(
+    <div style={{background:open?"#1F1F28":C.card,border:`1px solid ${open?C.dimmed:C.border}`,borderRadius:10,marginBottom:8,overflow:"hidden",transition:"all 0.2s"}}>
+      <button onClick={()=>setOpen(!open)} style={{width:"100%",background:"none",border:"none",padding:"14px 16px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12}}>
+        <span style={{width:26,height:26,borderRadius:6,background:C.dimmed,color:C.muted,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{index+1}</span>
+        <div style={{flex:1}}>
+          <div style={{color:C.text,fontWeight:600,fontSize:14}}>{ex.name}</div>
+          <div style={{color:C.muted,fontSize:12,marginTop:2}}>{ex.sets} sets · {ex.reps} reps · Rest {ex.restLabel}</div>
+          {recommendation&&recommendation.weight&&<div style={{fontSize:11,color:recommendation.color,marginTop:3,fontWeight:600}}>▶ {recommendation.weight} lb today</div>}
         </div>
-        <span style={{ color: C.muted, fontSize: 18, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>⌄</span>
+        <span style={{color:C.muted,fontSize:18,transition:"transform 0.2s",transform:open?"rotate(180deg)":"rotate(0)",flexShrink:0}}>⌄</span>
       </button>
-      {open && (
-        <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            {[{ label: "Tempo", val: ex.tempo }, { label: "Rest", val: ex.rest }, { label: "Est. Time", val: ex.time }].map(s => (
-              <div key={s.label} style={{ background: C.surface, borderRadius: 8, padding: "10px 8px", textAlign: "center" }}>
-                <div style={{ color: C.muted, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label}</div>
-                <div style={{ color: C.text, fontSize: 13, fontWeight: 700, marginTop: 4 }}>{s.val}</div>
+      {open&&(
+        <div style={{padding:"0 16px 16px",display:"flex",flexDirection:"column",gap:10}}>
+          {recommendation&&(
+            <div style={{background:`${recommendation.color}12`,border:`1px solid ${recommendation.color}30`,borderRadius:8,padding:"10px 12px"}}>
+              <div style={{color:recommendation.color,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>Today's Target</div>
+              <div style={{color:C.text,fontSize:13,lineHeight:1.5}}>{recommendation.msg}</div>
+            </div>
+          )}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[{label:"Tempo",val:ex.tempo},{label:"Rest",val:ex.restLabel},{label:"Est. Time",val:ex.time}].map(s=>(
+              <div key={s.label} style={{background:C.surface,borderRadius:8,padding:"10px 8px",textAlign:"center"}}>
+                <div style={{color:C.muted,fontSize:10,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase"}}>{s.label}</div>
+                <div style={{color:C.text,fontSize:13,fontWeight:700,marginTop:4}}>{s.val}</div>
               </div>
             ))}
           </div>
-          <div style={{ background: `${C.blue}12`, border: `1px solid ${C.blue}30`, borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ color: C.blue, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Form Cue</div>
-            <div style={{ color: C.text, fontSize: 13, lineHeight: 1.5 }}>{ex.form}</div>
+          <div style={{background:`${C.blue}12`,border:`1px solid ${C.blue}30`,borderRadius:8,padding:"10px 12px"}}>
+            <div style={{color:C.blue,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>Form Cue</div>
+            <div style={{color:C.text,fontSize:13,lineHeight:1.5}}>{ex.form}</div>
           </div>
-          <div style={{ background: `${C.gold}12`, border: `1px solid ${C.gold}30`, borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ color: C.gold, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Progressive Overload</div>
-            <div style={{ color: C.text, fontSize: 13, lineHeight: 1.5 }}>{ex.overload}</div>
+          <div style={{background:`${C.gold}12`,border:`1px solid ${C.gold}30`,borderRadius:8,padding:"10px 12px"}}>
+            <div style={{color:C.gold,fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>Progressive Overload</div>
+            <div style={{color:C.text,fontSize:13,lineHeight:1.5}}>{ex.overload}</div>
           </div>
         </div>
       )}
@@ -539,118 +455,94 @@ function ExerciseCard({ ex, index, lastLog }) {
   );
 }
 
-// ── Workout View ───────────────────────────────────────────────
-function WorkoutView({ workout, logs, onBack, onLog }) {
-  const workoutLogs = logs[workout.id] || [];
-  const lastSession = workoutLogs[workoutLogs.length - 1];
-  const getLastSetLog = (exIndex) => {
-    if (!lastSession?.sets?.[exIndex]) return null;
-    const done = lastSession.sets[exIndex].filter(s => s.done && s.weight);
-    return done.length > 0 ? done[done.length - 1] : null;
-  };
-  return (
-    <div style={{ animation: "fadeIn 0.25s ease" }}>
-      <div style={{ background: `linear-gradient(135deg, ${workout.color}22, ${C.surface})`, border: `1px solid ${workout.color}30`, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
-        <button onClick={onBack} style={{ background: C.dimmed, border: "none", color: C.muted, padding: "6px 12px", borderRadius: 6, fontSize: 12, cursor: "pointer", marginBottom: 14 }}>← Back</button>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 28 }}>{workout.emoji}</span>
-          <div>
-            <div style={{ color: C.text, fontSize: 22, fontWeight: 800, fontFamily: "'DM Sans', sans-serif" }}>{workout.day}</div>
-            <Badge tag={workout.tag} color={workout.color} />
-          </div>
+function WorkoutView({workout,logs,onBack,onLog}){
+  const wLogs=logs[workout.id]||[];
+  const lastSession=wLogs[wLogs.length-1];
+  const report=buildReport(workout,lastSession);
+  return(
+    <div style={{animation:"fadeIn 0.25s ease"}}>
+      <div style={{background:`${C.gold}10`,border:`1px solid ${C.gold}25`,borderRadius:10,padding:"12px 14px",marginBottom:14,display:"flex",gap:10,alignItems:"flex-start"}}>
+        <span style={{fontSize:18,flexShrink:0}}>🔥</span>
+        <div style={{fontSize:13,color:C.text,lineHeight:1.5}}><span style={{fontWeight:700,color:C.gold}}>Warm up first: </span>5 min low-resistance bike, then 1–2 warm-up sets at 50% on your first exercise.</div>
+      </div>
+      <div style={{background:`linear-gradient(135deg,${workout.color}22,${C.surface})`,border:`1px solid ${workout.color}30`,borderRadius:14,padding:"20px",marginBottom:16}}>
+        <button onClick={onBack} style={{background:C.dimmed,border:"none",color:C.muted,padding:"6px 12px",borderRadius:6,fontSize:12,cursor:"pointer",marginBottom:14}}>← Back</button>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+          <span style={{fontSize:28}}>{workout.emoji}</span>
+          <div><div style={{color:C.text,fontSize:22,fontWeight:800}}>{workout.day}</div><Badge tag={workout.tag} color={workout.color}/></div>
         </div>
-        <div style={{ color: C.muted, fontSize: 13, marginTop: 8, lineHeight: 1.5 }}>{workout.focus}</div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-          <div style={{ background: C.card, borderRadius: 8, padding: "8px 14px", fontSize: 12, color: C.text }}>⏱ {workout.duration}</div>
-          <div style={{ background: C.card, borderRadius: 8, padding: "8px 14px", fontSize: 12, color: C.text }}>🏋️ {workout.exercises.length} exercises</div>
-          {workoutLogs.length > 0 && <div style={{ background: C.card, borderRadius: 8, padding: "8px 14px", fontSize: 12, color: C.accent }}>📋 {workoutLogs.length} logged</div>}
+        <div style={{color:C.muted,fontSize:13,marginTop:8,lineHeight:1.5}}>{workout.focus}</div>
+        <div style={{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}}>
+          <div style={{background:C.card,borderRadius:8,padding:"8px 14px",fontSize:12,color:C.text}}>⏱ {workout.duration}</div>
+          <div style={{background:C.card,borderRadius:8,padding:"8px 14px",fontSize:12,color:C.text}}>🏋️ {workout.exercises.length} exercises</div>
+          {wLogs.length>0&&<div style={{background:C.card,borderRadius:8,padding:"8px 14px",fontSize:12,color:C.accent}}>📋 {wLogs.length} logged</div>}
         </div>
       </div>
-      <button onClick={onLog} style={{ width: "100%", background: `linear-gradient(135deg, ${C.accent}, ${C.accentDim})`, border: "none", borderRadius: 12, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16, boxShadow: `0 4px 20px ${C.accent}30` }}>
-        <span style={{ fontSize: 20 }}>📝</span>
-        <span style={{ fontWeight: 800, fontSize: 15, color: C.bg, fontFamily: "'DM Sans', sans-serif" }}>Log This Session</span>
-      </button>
-      {lastSession && (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 18 }}>🕐</span>
-          <div>
-            <div style={{ fontSize: 12, color: C.muted }}>Last session</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{new Date(lastSession.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</div>
-          </div>
-        </div>
-      )}
-      {workout.exercises.map((ex, i) => <ExerciseCard key={i} ex={ex} index={i} lastLog={getLastSetLog(i)} />)}
-    </div>
-  );
-}
-
-// ── History View ───────────────────────────────────────────────
-function HistoryView({ logs, onEditLog }) {
-  const allSessions = Object.entries(logs)
-    .filter(([id]) => id !== "morning")
-    .flatMap(([workoutId, sessions]) => sessions.map((s, idx) => ({ ...s, workoutId, sessionIdx: idx, workout: workouts.find(w => w.id === workoutId) })))
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const morningLogs = (logs["morning"] || []).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  if (allSessions.length === 0 && morningLogs.length === 0) {
-    return (
-      <div style={{ textAlign: "center", padding: "60px 20px", color: C.muted }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>No sessions yet</div>
-        <div style={{ fontSize: 13, lineHeight: 1.6 }}>Log a workout or complete your morning flow to see your history here.</div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {morningLogs.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>🌅 Morning Flow · {morningLogs.length} completed</div>
-          {morningLogs.slice(0, 5).map((l, i) => (
-            <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 20 }}>🌅</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: C.text, fontSize: 13 }}>Morning Flow</div>
-                <div style={{ fontSize: 12, color: C.muted }}>{new Date(l.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</div>
-              </div>
-              <div style={{ fontSize: 16, color: C.purple }}>✓</div>
+      {report&&(
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+          <div style={{fontSize:11,color:C.accent,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>📊 Today's Targets — based on last session</div>
+          {report.map((r,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,paddingBottom:i<report.length-1?10:0,marginBottom:i<report.length-1?10:0,borderBottom:i<report.length-1?`1px solid ${C.dimmed}`:"none"}}>
+              <span style={{fontSize:14,flexShrink:0,marginTop:1,color:r.color}}>▸</span>
+              <div><div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:2}}>{r.name}</div><div style={{fontSize:13,color:r.color,lineHeight:1.4}}>{r.msg}</div></div>
             </div>
           ))}
         </div>
       )}
+      <button onClick={onLog} style={{width:"100%",background:`linear-gradient(135deg,${C.accent},${C.accentDim})`,border:"none",borderRadius:12,padding:"16px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16,boxShadow:`0 4px 20px ${C.accent}30`}}>
+        <span style={{fontSize:20}}>📝</span>
+        <span style={{fontWeight:800,fontSize:15,color:C.bg}}>Log This Session</span>
+      </button>
+      {lastSession&&(
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:18}}>🕐</span>
+          <div><div style={{fontSize:12,color:C.muted}}>Last session</div><div style={{fontSize:13,fontWeight:600,color:C.text}}>{new Date(lastSession.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})}</div></div>
+        </div>
+      )}
+      {workout.exercises.map((ex,i)=><ExerciseCard key={i} ex={ex} index={i} recommendation={report?report[i]:null}/>)}
+    </div>
+  );
+}
 
-      {allSessions.length > 0 && (
+function HistoryView({logs}){
+  const all=Object.entries(logs).filter(([k])=>k!=="morning").flatMap(([wId,sessions])=>sessions.map(s=>({...s,workout:workouts.find(w=>w.id===wId)}))).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const ml=(logs["morning"]||[]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!all.length&&!ml.length) return(
+    <div style={{textAlign:"center",padding:"60px 20px",color:C.muted}}>
+      <div style={{fontSize:48,marginBottom:16}}>📋</div>
+      <div style={{fontSize:16,fontWeight:700,color:C.text,marginBottom:8}}>No sessions yet</div>
+      <div style={{fontSize:13,lineHeight:1.6}}>Log a workout or complete your morning flow to see history here.</div>
+    </div>
+  );
+  return(
+    <div>
+      {ml.length>0&&(
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:12,color:C.muted,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>🌅 Morning Flow · {ml.length} completed</div>
+          {ml.slice(0,5).map((l,i)=>(
+            <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
+              <span style={{fontSize:20}}>🌅</span>
+              <div style={{flex:1}}><div style={{fontWeight:700,color:C.text,fontSize:13}}>Morning Flow</div><div style={{fontSize:12,color:C.muted}}>{new Date(l.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})}</div></div>
+              <div style={{fontSize:16,color:C.purple}}>✓</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {all.length>0&&(
         <div>
-          <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>🏋️ Gym Sessions · {allSessions.length} logged</div>
-          {allSessions.map((s, i) => {
-            const w = s.workout;
-            if (!w) return null;
-            const totalDone = s.sets ? s.sets.flat().filter(x => x.done).length : 0;
-            const totalPossible = s.sets ? s.sets.flat().length : 0;
-            return (
-              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 22 }}>{w.emoji}</span>
-                    <div>
-                      <div style={{ fontWeight: 700, color: C.text, fontSize: 14 }}>{w.day}</div>
-                      <div style={{ fontSize: 12, color: C.muted }}>{new Date(s.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "short", month: "short", day: "numeric" })}</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 12, color: C.gold }}>{"★".repeat(s.energy || 0)}</div>
+          <div style={{fontSize:12,color:C.muted,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>🏋️ Gym Sessions · {all.length} logged</div>
+          {all.map((s,i)=>{
+            const w=s.workout; if(!w) return null;
+            const done=s.sets?s.sets.flat().filter(x=>x.done).length:0;
+            const total=s.sets?s.sets.flat().length:0;
+            return(
+              <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px",marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:22}}>{w.emoji}</span><div><div style={{fontWeight:700,color:C.text,fontSize:14}}>{w.day}</div><div style={{fontSize:12,color:C.muted}}>{new Date(s.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"short",month:"short",day:"numeric"})}</div></div></div>
+                  <div style={{fontSize:12,color:C.gold}}>{"★".repeat(s.energy||0)}</div>
                 </div>
-                <div style={{ marginBottom: s.notes ? 8 : 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: C.muted }}>Sets completed</span>
-                    <span style={{ fontSize: 11, color: totalDone === totalPossible ? C.accent : C.muted, fontWeight: 700 }}>{totalDone}/{totalPossible}</span>
-                  </div>
-                  <div style={{ height: 4, background: C.dimmed, borderRadius: 2 }}>
-                    <div style={{ height: "100%", width: `${totalPossible ? (totalDone / totalPossible) * 100 : 0}%`, background: totalDone === totalPossible ? C.accent : C.blue, borderRadius: 2 }} />
-                  </div>
-                </div>
-                {s.notes && <div style={{ fontSize: 12, color: C.muted, fontStyle: "italic", marginTop: 8, lineHeight: 1.5 }}>"{s.notes}"</div>}
+                <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:C.muted}}>Sets completed</span><span style={{fontSize:11,color:done===total?C.accent:C.muted,fontWeight:700}}>{done}/{total}</span></div><div style={{height:4,background:C.dimmed,borderRadius:2}}><div style={{height:"100%",width:`${total?(done/total)*100:0}%`,background:done===total?C.accent:C.blue,borderRadius:2}}/></div></div>
+                {s.notes&&<div style={{fontSize:12,color:C.muted,fontStyle:"italic",marginTop:8,lineHeight:1.5}}>"{s.notes}"</div>}
               </div>
             );
           })}
@@ -660,168 +552,152 @@ function HistoryView({ logs, onEditLog }) {
   );
 }
 
-// ── Main App ───────────────────────────────────────────────────
-function App() {
-  const [view, setView] = useState("home");
-  const [logs, setLogs] = useState(() => loadData("workout-logs-v2", {}));
-  const [logModal, setLogModal] = useState(null);
+function App(){
+  const [view,setView]=useState("home");
+  const [logs,setLogs]=useState(()=>load("myplan-logs-v3",{}));
+  const [bwLog,setBwLog]=useState(()=>load("myplan-bw-v1",[]));
+  const [logModal,setLogModal]=useState(null);
+  const [logDraft,setLogDraft]=useState(()=>load("myplan-draft-v1",{}));
 
-  const activeWorkout = workouts.find(w => w.id === view);
+  const activeWorkout=workouts.find(w=>w.id===view);
+  const allGymSessions=Object.entries(logs).filter(([k])=>k!=="morning").flatMap(([,v])=>v);
+  const showDeload=allGymSessions.length>=24;
+  const totalGym=allGymSessions.length;
+  const totalMorning=(logs["morning"]||[]).length;
 
-  const saveLog = (workoutId, editIndex, data) => {
-    const updated = { ...logs, [workoutId]: [...(logs[workoutId] || [])] };
-    if (editIndex !== null) updated[workoutId][editIndex] = { ...updated[workoutId][editIndex], ...data };
-    else updated[workoutId].push(data);
-    setLogs(updated);
-    saveData("workout-logs-v2", updated);
+  const saveLog=(workoutId,data)=>{
+    const updated={...logs,[workoutId]:[...(logs[workoutId]||[]),data]};
+    setLogs(updated);save("myplan-logs-v3",updated);
+    const nd={...logDraft};delete nd[workoutId];
+    setLogDraft(nd);save("myplan-draft-v1",nd);
     setLogModal(null);
   };
-
-  const logMorning = () => {
-    const today = new Date().toISOString().split("T")[0];
-    const updated = { ...logs, morning: [...(logs["morning"] || []), { date: today }] };
-    setLogs(updated);
-    saveData("workout-logs-v2", updated);
+  const updateDraft=(workoutId,data)=>{
+    const nd={...logDraft,[workoutId]:data};
+    setLogDraft(nd);save("myplan-draft-v1",nd);
+  };
+  const logMorning=()=>{
+    const today=new Date().toISOString().split("T")[0];
+    const updated={...logs,morning:[...(logs["morning"]||[]),{date:today}]};
+    setLogs(updated);save("myplan-logs-v3",updated);
+  };
+  const addBw=(entry)=>{
+    const updated=[...bwLog,entry];setBwLog(updated);save("myplan-bw-v1",updated);
   };
 
-  const totalGym = Object.entries(logs).filter(([k]) => k !== "morning").reduce((a, [, v]) => a + v.length, 0);
-  const totalMorning = (logs["morning"] || []).length;
-
-  const navItems = [
-    { id: "home", label: "Workouts", icon: "🏋️" },
-    { id: "morning", label: "Morning", icon: "🌅" },
-    { id: "schedule", label: "Schedule", icon: "📅" },
-    { id: "history", label: "History", icon: "📋" },
-    { id: "guidelines", label: "Guide", icon: "📖" },
+  const navItems=[
+    {id:"home",label:"Workouts",icon:"🏋️"},
+    {id:"morning",label:"Morning",icon:"🌅"},
+    {id:"schedule",label:"Schedule",icon:"📅"},
+    {id:"history",label:"History",icon:"📋"},
+    {id:"body",label:"Weight",icon:"⚖️"},
   ];
 
-  const getTitle = () => {
-    if (activeWorkout) return activeWorkout.day;
-    const titles = { home: "Your Plan", morning: "Morning Flow", schedule: "Schedule", history: "History", guidelines: "Guidelines" };
-    return titles[view] || "Your Plan";
-  };
+  const titles={home:"Your Plan",morning:"Morning Flow",schedule:"Schedule",history:"History",body:"Body Weight"};
+  const title=activeWorkout?activeWorkout.day:(titles[view]||"Your Plan");
 
-  return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: 88 }}>
-      {logModal && (
+  return(
+    <div style={{height:"100%",width:"100%",display:"flex",flexDirection:"column",background:C.bg,color:C.text,fontFamily:"'DM Sans','Helvetica Neue',sans-serif",maxWidth:480,margin:"0 auto",overflow:"hidden"}}>
+
+      {logModal&&(
         <LogModal
-          workout={workouts.find(w => w.id === logModal.workoutId)}
-          existingLog={logModal.existingLog}
-          onSave={data => saveLog(logModal.workoutId, logModal.editIndex, data)}
-          onClose={() => setLogModal(null)}
+          workout={workouts.find(w=>w.id===logModal.workoutId)}
+          existingLog={null}
+          draft={logDraft[logModal.workoutId]||null}
+          onDraftChange={data=>updateDraft(logModal.workoutId,data)}
+          onSave={data=>saveLog(logModal.workoutId,data)}
+          onClose={()=>setLogModal(null)}
         />
       )}
 
       {/* Top bar */}
-      <div style={{ position: "sticky", top: 0, zIndex: 10, background: `${C.bg}EE`, backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{flexShrink:0,background:`${C.bg}EE`,backdropFilter:"blur(12px)",borderBottom:`1px solid ${C.border}`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{getTitle()}</div>
-          {view === "home" && <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>Upper/Lower · Injury-modified</div>}
-          {view === "morning" && <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>~9 min · Slow & meditative</div>}
+          <div style={{fontSize:18,fontWeight:800,color:C.text}}>{title}</div>
+          {view==="home"&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>Upper/Lower · Injury-modified</div>}
+          {view==="morning"&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>~9 min · Slow & meditative</div>}
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          {totalMorning > 0 && <div style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}40`, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, color: C.purple }}>🌅 {totalMorning}</div>}
-          {totalGym > 0 && <div style={{ background: `${C.green}18`, border: `1px solid ${C.green}40`, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, color: C.green }}>🔥 {totalGym}</div>}
+        <div style={{display:"flex",gap:6}}>
+          {totalMorning>0&&<div style={{background:`${C.purple}18`,border:`1px solid ${C.purple}40`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:C.purple}}>🌅 {totalMorning}</div>}
+          {totalGym>0&&<div style={{background:`${C.green}18`,border:`1px solid ${C.green}40`,borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:C.green}}>🔥 {totalGym}</div>}
         </div>
       </div>
 
-      <div style={{ padding: "20px 16px" }}>
-        {/* HOME */}
-        {view === "home" && !activeWorkout && (
-          <div style={{ animation: "fadeIn 0.3s ease" }}>
-            <div style={{ background: `linear-gradient(135deg, ${C.accent}22, transparent)`, border: `1px solid ${C.accent}30`, borderRadius: 14, padding: "18px", marginBottom: 20 }}>
-              <div style={{ fontSize: 12, color: C.accent, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Goal</div>
-              <div style={{ fontSize: 15, lineHeight: 1.6, color: C.text }}>Muscle growth + fat loss · Wrist, knee & ankle friendly · Progressive overload-driven</div>
+      {/* Deload banner */}
+      {showDeload&&(
+        <div style={{flexShrink:0,background:`${C.red}18`,borderBottom:`1px solid ${C.red}30`,padding:"10px 20px",display:"flex",gap:10,alignItems:"center"}}>
+          <span style={{fontSize:18}}>⚠️</span>
+          <div style={{fontSize:13,color:C.text,lineHeight:1.4}}><span style={{fontWeight:700,color:C.red}}>Deload week due.</span> Drop all weights 40–50% for this week. You've earned it.</div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="page">
+        {view==="home"&&!activeWorkout&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            <div style={{background:`linear-gradient(135deg,${C.accent}22,transparent)`,border:`1px solid ${C.accent}30`,borderRadius:14,padding:"18px",marginBottom:20}}>
+              <div style={{fontSize:12,color:C.accent,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Goal</div>
+              <div style={{fontSize:15,lineHeight:1.6,color:C.text}}>Muscle growth + fat loss · Wrist, knee & ankle friendly · Progressive overload-driven</div>
             </div>
-            <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>Your Workouts</div>
-            {workouts.map(w => {
-              const count = (logs[w.id] || []).length;
-              return (
-                <button key={w.id} onClick={() => setView(w.id)} style={{ width: "100%", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "16px", marginBottom: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: `${w.color}20`, border: `1px solid ${w.color}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{w.emoji}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{w.day}</span>
-                      <Badge tag={w.tag} color={w.color} />
+            <div style={{fontSize:12,color:C.muted,fontWeight:600,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:12}}>Your Workouts</div>
+            {workouts.map(w=>{
+              const count=(logs[w.id]||[]).length;
+              const hasDraft=!!logDraft[w.id];
+              return(
+                <button key={w.id} onClick={()=>setView(w.id)} style={{width:"100%",background:C.card,border:`1px solid ${hasDraft?C.accent+"50":C.border}`,borderRadius:12,padding:"16px",marginBottom:10,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:48,height:48,borderRadius:12,background:`${w.color}20`,border:`1px solid ${w.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{w.emoji}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                      <span style={{fontSize:16,fontWeight:700,color:C.text}}>{w.day}</span>
+                      <Badge tag={w.tag} color={w.color}/>
+                      {hasDraft&&<span style={{fontSize:9,fontWeight:700,color:C.accent,background:`${C.accent}15`,border:`1px solid ${C.accent}30`,borderRadius:4,padding:"2px 6px",letterSpacing:"0.04em"}}>IN PROGRESS</span>}
                     </div>
-                    <div style={{ fontSize: 12, color: C.muted }}>{w.exercises.length} exercises · {w.duration}</div>
-                    {count > 0 && <div style={{ fontSize: 11, color: C.accent, marginTop: 2 }}>📋 {count} session{count !== 1 ? "s" : ""} logged</div>}
+                    <div style={{fontSize:12,color:C.muted}}>{w.exercises.length} exercises · {w.duration}</div>
+                    {count>0&&<div style={{fontSize:11,color:C.accent,marginTop:2}}>📋 {count} session{count!==1?"s":""} logged</div>}
                   </div>
-                  <span style={{ color: C.dimmed, fontSize: 18 }}>›</span>
+                  <span style={{color:C.dimmed,fontSize:18}}>›</span>
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* WORKOUT */}
-        {activeWorkout && (
-          <WorkoutView workout={activeWorkout} logs={logs} onBack={() => setView("home")} onLog={() => setLogModal({ workoutId: activeWorkout.id, editIndex: null, existingLog: null })} />
-        )}
+        {activeWorkout&&<WorkoutView workout={activeWorkout} logs={logs} onBack={()=>setView("home")} onLog={()=>setLogModal({workoutId:activeWorkout.id})}/>}
+        {view==="morning"&&<MorningView logs={logs} onLogMorning={logMorning}/>}
 
-        {/* MORNING */}
-        {view === "morning" && <MorningView logs={logs} onLogMorning={logMorning} />}
-
-        {/* SCHEDULE */}
-        {view === "schedule" && (
-          <div style={{ animation: "fadeIn 0.3s ease" }}>
-            {schedule.map((s, i) => (
-              <div key={i} onClick={() => s.workoutId && setView(s.workoutId)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", marginBottom: 8, background: s.workoutId ? C.card : C.surface, border: `1px solid ${s.workoutId ? C.dimmed : C.border}`, borderRadius: 12, cursor: s.workoutId ? "pointer" : "default", opacity: s.workoutId ? 1 : 0.65 }}>
-                <div style={{ width: 44, textAlign: "center", color: s.workoutId ? C.accent : C.muted, fontWeight: 800, fontSize: 12, letterSpacing: "0.06em" }}>{s.day}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, color: C.text, fontSize: 15 }}>{s.label}</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{s.sub}</div>
-                </div>
-                {s.workoutId ? <span style={{ color: C.dimmed }}>›</span> : <span style={{ fontSize: 18 }}>😴</span>}
+        {view==="schedule"&&(
+          <div style={{animation:"fadeIn 0.3s ease"}}>
+            {schedule.map((s,i)=>(
+              <div key={i} onClick={()=>s.workoutId&&setView(s.workoutId)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",marginBottom:8,background:s.workoutId?C.card:C.surface,border:`1px solid ${s.workoutId?C.dimmed:C.border}`,borderRadius:12,cursor:s.workoutId?"pointer":"default",opacity:s.workoutId?1:0.65}}>
+                <div style={{width:44,textAlign:"center",color:s.workoutId?C.accent:C.muted,fontWeight:800,fontSize:12,letterSpacing:"0.06em"}}>{s.day}</div>
+                <div style={{flex:1}}><div style={{fontWeight:700,color:C.text,fontSize:15}}>{s.label}</div><div style={{fontSize:12,color:C.muted,marginTop:2}}>{s.sub}</div></div>
+                {s.workoutId?<span style={{color:C.dimmed}}>›</span>:<span style={{fontSize:18}}>😴</span>}
               </div>
             ))}
-            <div style={{ background: `${C.accent}10`, border: `1px solid ${C.accent}25`, borderRadius: 12, padding: "14px 16px", marginTop: 8 }}>
-              <div style={{ color: C.accent, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Cardio (optional)</div>
-              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.6 }}>Wed & Sat: 25–35 min incline treadmill walk · 3.5–4 mph · 8–12% incline.</div>
+            <div style={{background:`${C.accent}10`,border:`1px solid ${C.accent}25`,borderRadius:12,padding:"14px 16px",marginTop:8}}>
+              <div style={{color:C.accent,fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Cardio (optional)</div>
+              <div style={{color:C.text,fontSize:13,lineHeight:1.6}}>Wed & Sat: 25–35 min incline treadmill walk · 3.5–4 mph · 8–12% incline.</div>
             </div>
-            <div style={{ background: `${C.purple}10`, border: `1px solid ${C.purple}25`, borderRadius: 12, padding: "14px 16px", marginTop: 10 }}>
-              <div style={{ color: C.purple, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Morning Flow — Every Day</div>
-              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.6 }}>~9 minutes, right after waking. Pairs especially well before gym days to warm up the joints.</div>
+            <div style={{background:`${C.purple}10`,border:`1px solid ${C.purple}25`,borderRadius:12,padding:"14px 16px",marginTop:10}}>
+              <div style={{color:C.purple,fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Morning Flow — Every Day</div>
+              <div style={{color:C.text,fontSize:13,lineHeight:1.6}}>~9 minutes, right after waking. Pairs well before gym days to warm up the joints.</div>
             </div>
           </div>
         )}
 
-        {/* HISTORY */}
-        {view === "history" && <HistoryView logs={logs} onEditLog={(workoutId, idx, s) => setLogModal({ workoutId, editIndex: idx, existingLog: s })} />}
-
-        {/* GUIDELINES */}
-        {view === "guidelines" && (
-          <div style={{ animation: "fadeIn 0.3s ease" }}>
-            <div style={{ background: `linear-gradient(135deg, ${C.red}15, transparent)`, border: `1px solid ${C.red}25`, borderRadius: 14, padding: "16px", marginBottom: 16 }}>
-              <div style={{ color: C.red, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Progressive Overload — The Only Rule</div>
-              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.6 }}>Hit the top of your rep range on ALL sets → add weight next session. Log every session — guessing kills progress.</div>
-            </div>
-            {guidelines.map((g, i) => (
-              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px", marginBottom: 8, display: "flex", gap: 14, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{g.icon}</span>
-                <div>
-                  <div style={{ fontWeight: 700, color: C.text, fontSize: 13, marginBottom: 3 }}>{g.label}</div>
-                  <div style={{ color: C.muted, fontSize: 13, lineHeight: 1.5 }}>{g.value}</div>
-                </div>
-              </div>
-            ))}
-            <div style={{ background: `${C.gold}10`, border: `1px solid ${C.gold}25`, borderRadius: 12, padding: "14px 16px", marginTop: 8 }}>
-              <div style={{ color: C.gold, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>How Long to Run This Plan</div>
-              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.6 }}>Minimum <strong style={{ color: C.gold }}>12 weeks</strong>. Real muscle growth kicks in around weeks 4–6. Only switch when you plateau on multiple lifts for 2+ weeks. The Upper/Lower structure can carry you for years.</div>
-            </div>
-          </div>
-        )}
+        {view==="history"&&<HistoryView logs={logs}/>}
+        {view==="body"&&<WeightTracker bwLog={bwLog} onAdd={addBw}/>}
       </div>
 
-      {/* Bottom nav */}
-      <nav style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: `${C.surface}F8`, backdropFilter: "blur(16px)", borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", padding: "8px 0 16px" }}>
-        {navItems.map(n => {
-          const active = view === n.id || (n.id === "home" && !!activeWorkout);
-          return (
-            <button key={n.id} onClick={() => setView(n.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 0" }}>
-              <span style={{ fontSize: 18 }}>{n.icon}</span>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: active ? C.accent : C.muted, transition: "color 0.15s" }}>{n.label}</span>
-              {active && <div style={{ width: 14, height: 2, background: C.accent, borderRadius: 1 }} />}
+      {/* Nav */}
+      <nav style={{flexShrink:0,background:`${C.surface}F8`,backdropFilter:"blur(16px)",borderTop:`1px solid ${C.border}`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"8px 0 18px"}}>
+        {navItems.map(n=>{
+          const active=view===n.id||(n.id==="home"&&!!activeWorkout);
+          return(
+            <button key={n.id} onClick={()=>setView(n.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 0"}}>
+              <span style={{fontSize:18}}>{n.icon}</span>
+              <span style={{fontSize:9,fontWeight:700,letterSpacing:"0.04em",textTransform:"uppercase",color:active?C.accent:C.muted,transition:"color 0.15s"}}>{n.label}</span>
+              {active&&<div style={{width:14,height:2,background:C.accent,borderRadius:1}}/>}
             </button>
           );
         })}
